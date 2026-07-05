@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I-HEAR: Lidar Hat Simulator & Prototyping Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="pulse-icon"></div>
+                <h1>I-HEAR <span>Prototype Dashboard</span></h1>
+            </div>
+            <div class="header-status">
+                <span class="status-badge connected">
+                    <span class="dot"></span> Simulator Ready
+                </span>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('simulator')">Visual Simulator</button>
+            <button class="tab-btn" onclick="switchTab('code-viewer')">Python Code</button>
+            <button class="tab-btn" onclick="switchTab('wiring-guide')">Hardware Setup Guide</button>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="app-content">
+            
+            <!-- SIMULATOR TAB -->
+            <section id="simulator-tab" class="tab-content active">
+                <div class="grid-layout">
+                    <!-- Left: Canvas Area -->
+                    <div class="canvas-panel glass-panel">
+                        <div class="panel-header">
+                            <h2>2D Environment Map</h2>
+                            <div class="canvas-actions">
+                                <button id="add-obstacle-btn" class="btn btn-secondary">Add Obstacle</button>
+                                <button id="clear-obstacles-btn" class="btn btn-danger">Reset Map</button>
+                            </div>
+                        </div>
+                        
+                        <div class="canvas-wrapper">
+                            <canvas id="sim-canvas" width="600" height="500"></canvas>
+                            <div class="canvas-instructions">
+                                <p><strong>Controls:</strong> Move User using <strong>WASD / Arrow Keys</strong> or <strong>Drag Mouse</strong>. Drag obstacles to move them.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Status & Controls -->
+                    <div class="side-column">
+                        <!-- HUD/Telemetry Panel -->
+                        <div class="hud-panel glass-panel">
+                            <h2>Real-Time Telemetry (HUD)</h2>
+                            
+                            <div class="state-indicators">
+                                <div id="status-card" class="status-card safe">
+                                    <span class="status-label">SYSTEM STATE</span>
+                                    <span id="status-value" class="status-value">SAFE</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">NEAREST OBSTACLE</span>
+                                    <span id="distance-value" class="metric-value">-- m</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">ANGLE & SECTOR</span>
+                                    <span id="angle-value" class="metric-value">--° (--)</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Obstacle Distance Visualizer Bar -->
+                            <div class="distance-bar-container">
+                                <div class="bar-header">
+                                    <span>Active Directional Warning Zone</span>
+                                    <span id="bar-distance-lbl">Clear</span>
+                                </div>
+                                <div class="bar-track">
+                                    <div id="bar-fill" class="bar-fill safe" style="width: 0%"></div>
+                                </div>
+                                <div class="bar-markers">
+                                    <span>0.0m</span>
+                                    <span>0.5m</span>
+                                    <span>1.0m</span>
+                                    <span>1.5m</span>
+                                    <span>2.0m</span>
+                                    <span>2.5m+</span>
+                                </div>
+                            </div>
+
+                            <!-- Haptic Motor Indicators -->
+                            <div class="haptic-indicator-container">
+                                <span class="status-label">Haptic Band Feedback (Simulation)</span>
+                                <div class="haptic-grid">
+                                    <div></div>
+                                    <div id="motor-front" class="motor-node">FRONT</div>
+                                    <div></div>
+                                    <div id="motor-left" class="motor-node">LEFT</div>
+                                    <div class="motor-center">👤</div>
+                                    <div id="motor-right" class="motor-node">RIGHT</div>
+                                    <div></div>
+                                    <div id="motor-behind" class="motor-node">BEHIND</div>
+                                    <div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Controls Panel -->
+                        <div class="controls-panel glass-panel">
+                            <h2>Device configuration</h2>
+                            
+                            <!-- Audio Settings -->
+                            <div class="control-group">
+                                <h3>Audio Feedback (Bone Conduction)</h3>
+                                <div class="toggle-row">
+                                    <label class="switch-container">
+                                        <input type="checkbox" id="audio-enable" checked>
+                                        <span class="slider round"></span>
+                                        <span class="label-text">Spatial Audio (Stereo Pan & Pitch Beeps)</span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <label class="switch-container">
+                                        <input type="checkbox" id="speech-enable">
+                                        <span class="slider round"></span>
+                                        <span class="label-text">Directional Voice Warnings (Spoken TTS)</span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <label class="switch-container">
+                                        <input type="checkbox" id="haptic-enable" checked>
+                                        <span class="slider round"></span>
+                                        <span class="label-text">Directional Haptic Band (Vibration)</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="slider-row">
+                                    <div class="slider-header">
+                                        <span>Beep Pitch</span>
+                                        <span id="beep-pitch-val">850 Hz</span>
+                                    </div>
+                                    <input type="range" id="beep-pitch" min="400" max="1500" step="50" value="850">
+                                </div>
+                            </div>
+
+                            <!-- Lidar / Range Settings -->
+                            <div class="control-group border-top">
+                                <h3>LiDAR Configurations</h3>
+                                
+                                <div class="slider-row">
+                                    <div class="slider-header">
+                                        <span>Warning Angle Cone</span>
+                                        <span id="cone-angle-val">60°</span>
+                                    </div>
+                                    <input type="range" id="cone-angle" min="20" max="120" step="5" value="60">
+                                    <span class="slider-hint">Symmetric cone directly in front of the hat</span>
+                                </div>
+
+                                <div class="slider-row">
+                                    <div class="slider-header">
+                                        <span>Max Safety Threshold</span>
+                                        <span id="max-dist-val">2.5 m</span>
+                                    </div>
+                                    <input type="range" id="max-dist" min="1.0" max="4.0" step="0.1" value="2.5">
+                                    <span class="slider-hint">Obstacles beyond this range do not trigger alert beeps</span>
+                                </div>
+                                
+                                <div class="slider-row">
+                                    <div class="slider-header">
+                                        <span>Critical Danger Threshold</span>
+                                        <span id="min-dist-val">0.5 m</span>
+                                    </div>
+                                    <input type="range" id="min-dist" min="0.2" max="1.0" step="0.05" value="0.5">
+                                    <span class="slider-hint">Closest zone that triggers maximum beep rate</span>
+                                </div>
+
+                                <div class="slider-row">
+                                    <div class="slider-header">
+                                        <span>Simulated Lidar Noise</span>
+                                        <span id="noise-val">1.5%</span>
+                                    </div>
+                                    <input type="range" id="noise-slider" min="0" max="5" step="0.5" value="1.5">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CODE VIEWER TAB -->
+            <section id="code-viewer-tab" class="tab-content">
+                <div class="code-viewer-layout glass-panel">
+                    <div class="panel-header">
+                        <h2>Deployable Python Source Code</h2>
+                        <span class="panel-subtitle">Copy these scripts directly to your Raspberry Pi 4/5 to run on the real YDLIDAR X4</span>
+                    </div>
+                    <div class="code-tabs">
+                        <button class="code-tab-btn active" onclick="switchCodeTab('code-main')">main.py (Control Loop)</button>
+                        <button class="code-tab-btn" onclick="switchCodeTab('code-parser')">ydlidar_parser.py (Serial Driver)</button>
+                    </div>
+                    
+                    <div id="code-main" class="code-block active">
+                        <pre><code># loading main.py code...</code></pre>
+                    </div>
+                    
+                    <div id="code-parser" class="code-block">
+                        <pre><code># loading ydlidar_parser.py code...</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HARDWARE SETUP GUIDE TAB -->
+            <section id="wiring-guide-tab" class="tab-content">
+                <div class="guide-layout glass-panel">
+                    <h2>YDLIDAR X4 & Raspberry Pi Setup Guide</h2>
+                    
+                    <div class="guide-section">
+                        <h3>1. Components Checklist</h3>
+                        <ul>
+                            <li><strong>LiDAR Unit:</strong> YDLIDAR X4 (includes Lidar motor, CP2102 USB-to-UART adapter board, 8-pin connector cable, and USB cable).</li>
+                            <li><strong>Controller Board:</strong> Raspberry Pi 4 or 5 (running Raspberry Pi OS / Linux).</li>
+                            <li><strong>Audio Device:</strong> Bone Conduction Earphone (connected via 3.5mm jack or Bluetooth).</li>
+                            <li><strong>Power Source:</strong> 5V power bank (with at least 3A output for Raspberry Pi 4/5).</li>
+                        </ul>
+                    </div>
+
+                    <div class="guide-section">
+                        <h3>2. Hardware Connection Diagram</h3>
+                        <p>The YDLIDAR X4 package comes with an adapter board that bridges UART to USB, making it extremely easy to plug directly into one of the USB ports of the Raspberry Pi. This is the simplest and safest setup:</p>
+                        
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Sensor Adapter Pin</th>
+                                        <th>Target Connection</th>
+                                        <th>Function</th>
+                                        <th>Wire Color (Typical)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>VCC_M</strong></td>
+                                        <td>5V Power Bank / Pi 5V</td>
+                                        <td>Motor Power (Requires separate power line)</td>
+                                        <td>Red</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>VCC_L</strong></td>
+                                        <td>5V USB Host</td>
+                                        <td>Lidar Core Power</td>
+                                        <td>Red</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>GND</strong></td>
+                                        <td>GND</td>
+                                        <td>Ground Connection</td>
+                                        <td>Black</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>TX</strong></td>
+                                        <td>RXD (Pin 10 / GPIO 15 or UART Bridge)</td>
+                                        <td>Transmit (Data out of Lidar)</td>
+                                        <td>Yellow</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>RX</strong></td>
+                                        <td>TXD (Pin 8 / GPIO 14 or UART Bridge)</td>
+                                        <td>Receive (Control commands into Lidar)</td>
+                                        <td>White</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>M_EN</strong></td>
+                                        <td>Pull high (3.3V) or adapter DTR</td>
+                                        <td>Motor Enable Pin</td>
+                                        <td>Green</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DEV_EN</strong></td>
+                                        <td>Pull high (3.3V) or adapter RTS</td>
+                                        <td>Device Enable Pin</td>
+                                        <td>Blue</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="note-box alert-info">
+                            <p><strong>Pro Tip:</strong> When using the included USB-to-UART Adapter Board, simply connect the 8-pin flat cable from the LiDAR module to the adapter, and use a Micro-USB cable to connect the adapter to the Raspberry Pi's USB port. The Pi will recognize it as a serial port device, typically at <code>/dev/ttyUSB0</code>. No custom wiring or soldering is required!</p>
+                        </div>
+                    </div>
+
+                    <div class="guide-section">
+                        <h3>3. Software Installation Steps</h3>
+                        <p>Follow these steps on your Raspberry Pi terminal to get everything running:</p>
+                        <ol>
+                            <li>
+                                <strong>System Update & Core Utilities:</strong> Update your package list and install general audio command-line players (used by the scripts to generate beeps):
+                                <pre><code>sudo apt update && sudo apt upgrade -y
+sudo apt install python3-pip alsa-utils -y</code></pre>
+                            </li>
+                            <li>
+                                <strong>Install python packages:</strong>
+                                Install the serial communication library:
+                                <pre><code>pip3 install pyserial</code></pre>
+                            </li>
+                            <li>
+                                <strong>Deploy the scripts:</strong>
+                                Place <code>main.py</code> and <code>ydlidar_parser.py</code> in the same folder.
+                            </li>
+                            <li>
+                                <strong>Run the Prototype:</strong>
+                                Connect the LiDAR USB adapter and type:
+                                <pre><code># 1. Edit main.py to set IS_SIMULATION = False and save
+# 2. Run the application:
+python3 main.py</code></pre>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+        
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>I-HEAR Prototype Assistive Technology &bull; Designed for visual impairment obstacle warning.</p>
+        </footer>
+    </div>
+
+    <!-- Script loading -->
+    <script src="app.js"></script>
+</body>
+</html>
