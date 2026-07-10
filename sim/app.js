@@ -55,7 +55,7 @@ from ydlidar_parser import YDLidarX4
 
 # --- Configuration ---
 LIDAR_PORT = "/dev/ttyUSB0"
-BAUDRATE = 128000
+BAUDRATE = 115200
 IS_SIMULATION = True # Default to simulation for safety and testing
 
 # Mode selection: 
@@ -314,7 +314,7 @@ import math
 import random
 
 class YDLidarX4:
-    def __init__(self, port="/dev/ttyUSB0", baudrate=128000, is_simulated=False):
+    def __init__(self, port="/dev/ttyUSB0", baudrate=115200, is_simulated=False):
         self.port = port
         self.baudrate = baudrate
         self.is_simulated = is_simulated
@@ -347,7 +347,7 @@ class YDLidarX4:
                 bytesize=serial.EIGHTBITS, parity=serial.PARITY_NONE,
                 stopbits=serial.STOPBITS_ONE, timeout=1.0
             )
-            self.serial_port.dtr = False
+            self.serial_port.dtr = True
             self.serial_port.rts = True
             time.sleep(0.5)
             return True

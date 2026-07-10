@@ -12,7 +12,7 @@ class YDLidarX4:
     Python driver and simulator for the YDLIDAR X4 2D Laser Scanner.
     Can operate in both real hardware mode (via serial) and simulation mode.
     """
-    def __init__(self, port="/dev/ttyUSB0", baudrate=128000, is_simulated=False):
+    def __init__(self, port="/dev/ttyUSB0", baudrate=115200, is_simulated=False):
         self.port = port
         self.baudrate = baudrate
         self.is_simulated = is_simulated
@@ -56,7 +56,7 @@ class YDLidarX4:
                 timeout=1.0
             )
             # DTR/RTS lines control the motor enable on some board adapters
-            self.serial_port.dtr = False
+            self.serial_port.dtr = True
             self.serial_port.rts = True
             time.sleep(0.5)
             print("[LiDAR] Serial port opened successfully.")

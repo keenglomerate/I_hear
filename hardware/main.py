@@ -12,7 +12,7 @@ from ydlidar_parser import YDLidarX4
 
 # --- Configuration ---
 LIDAR_PORT = "/dev/ttyUSB0"
-BAUDRATE = 128000
+BAUDRATE = 115200
 IS_SIMULATION = True # Default to simulation for safety and testing
 
 # Mode selection: 
@@ -334,11 +334,19 @@ def process_360_scan_data(scan):
     return closest_distance, closest_angle, closest_sector, (left_wall is not None), (right_wall is not None)
 
 def main():
-    global running, AUDIO_FEEDBACK_MODE
+    global running, AUDIO_FEEDBACK_MODE, IS_SIMULATION
     print("==============================================")
     print("      I-HEAR: Blind Navigation Headwear      ")
     print("==============================================")
     
+    # Parse real mode overrides
+    if "--real" in sys.argv:
+        IS_SIMULATION = False
+        sys.argv.remove("--real")
+    elif "-r" in sys.argv:
+        IS_SIMULATION = False
+        sys.argv.remove("-r")
+        
     print("Select Output Feedback Mode:")
     print("  1. Spatial Stereo Beeps (Tone pitch & pan)")
     print("  2. Directional Voice Speech (espeak warnings)")
@@ -354,7 +362,7 @@ def main():
     elif choice == "3":
         AUDIO_FEEDBACK_MODE = "HAPTIC_GPIO"
         
-    print(f"[System] Selected Feedback Mode: {AUDIO_FEEDBACK_MODE}")
+    print(f"[System] Selected Feedback Mode: {AUDIO_FEEDBACK_MODE} (Real Hardware: {not IS_SIMULATION})")
     
     # Initialize LiDAR
     lidar = YDLidarX4(port=LIDAR_PORT, baudrate=BAUDRATE, is_simulated=IS_SIMULATION)
