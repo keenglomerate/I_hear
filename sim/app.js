@@ -255,8 +255,16 @@ def process_360_scan_data(scan):
     return closest_distance, closest_angle, closest_sector
 
 def main():
-    global running, AUDIO_FEEDBACK_MODE
+    global running, AUDIO_FEEDBACK_MODE, IS_SIMULATION, LIDAR_PORT
     
+    # Parse TCP connection overrides
+    for arg in list(sys.argv):
+        if arg.startswith("tcp://"):
+            LIDAR_PORT = arg
+            IS_SIMULATION = False
+            sys.argv.remove(arg)
+            break
+            
     choice = "1"
     if len(sys.argv) > 1 and sys.argv[1] in ["1", "2", "3"]:
         choice = sys.argv[1]

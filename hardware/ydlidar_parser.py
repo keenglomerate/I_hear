@@ -35,8 +35,8 @@ class YDLidarX4:
         ]
         
     def connect(self):
-        """Connects to the LiDAR serial port or initializes simulator."""
-        if not self.is_simulated and serial is None:
+        """Connects to the LiDAR serial port, TCP socket bridge, or initializes simulator."""
+        if not self.is_simulated and serial is None and not self.port.startswith("tcp://"):
             print("[LiDAR] Warning: 'pyserial' library not found. Cannot connect to real hardware.")
             print("[LiDAR] Auto-falling back to SIMULATION mode.")
             self.is_simulated = True
@@ -44,6 +44,58 @@ class YDLidarX4:
         if self.is_simulated:
             print("[LiDAR] Initializing in SIMULATION mode.")
             return True
+
+        if self.port.startswith("tcp://"):
+            try:
+                import socket
+                parts = self.port.replace("tcp://", "").split(":")
+                host = parts[0]
+                port = int(parts[1])
+                print(f"[LiDAR] Connecting to TCP serial bridge on {host}:{port}...")
+                
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect((host, port))
+                sock.settimeout(1.0)
+                
+                class SocketSerialWrapper:
+                    def __init__(self, sock):
+                        self.sock = sock
+                        self.is_open = True
+                        
+                    def read(self, n):
+                        try:
+                            # Read up to 1024 bytes instead of just 1 byte for performance
+                            return self.sock.recv(max(n, 1024))
+                        except socket.timeout:
+                            return b''
+                        except Exception:
+                            return b''
+                            
+                    def write(self, data):
+                        try:
+                            self.sock.sendall(data)
+                        except Exception:
+                            pass
+                            
+                    def close(self):
+                        self.is_open = False
+                        self.sock.close()
+                        
+                    @property
+                    def in_waiting(self):
+                        return 1 if self.is_open else 0
+                        
+                    def reset_input_buffer(self):
+                        pass
+                
+                self.serial_port = SocketSerialWrapper(sock)
+                print("[LiDAR] Connected to TCP serial bridge successfully.")
+                return True
+            except Exception as e:
+                print(f"[LiDAR] TCP Connection failed: {e}")
+                print("[LiDAR] Auto-falling back to SIMULATION mode.")
+                self.is_simulated = True
+                return True
 
         try:
             print(f"[LiDAR] Connecting to YDLIDAR X4 on {self.port} at {self.baudrate} baud...")

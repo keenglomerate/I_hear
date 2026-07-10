@@ -334,7 +334,7 @@ def process_360_scan_data(scan):
     return closest_distance, closest_angle, closest_sector, (left_wall is not None), (right_wall is not None)
 
 def main():
-    global running, AUDIO_FEEDBACK_MODE, IS_SIMULATION
+    global running, AUDIO_FEEDBACK_MODE, IS_SIMULATION, LIDAR_PORT
     print("==============================================")
     print("      I-HEAR: Blind Navigation Headwear      ")
     print("==============================================")
@@ -346,6 +346,14 @@ def main():
     elif "-r" in sys.argv:
         IS_SIMULATION = False
         sys.argv.remove("-r")
+        
+    # Check if a TCP connection is requested (e.g. tcp://localhost:1234)
+    for arg in list(sys.argv):
+        if arg.startswith("tcp://"):
+            LIDAR_PORT = arg
+            IS_SIMULATION = False
+            sys.argv.remove(arg)
+            break
         
     print("Select Output Feedback Mode:")
     print("  1. Spatial Stereo Beeps (Tone pitch & pan)")
